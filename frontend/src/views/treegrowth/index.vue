@@ -7,9 +7,20 @@
       </div>
       <div class="page-actions">
         <button class="btn primary" type="button" @click="openCreate">登记林木生长记录</button>
+        <button class="btn" type="button" @click="triggerImport">导入调查文件</button>
+        <button class="btn" type="button" @click="downloadBaseline">下载基线版本</button>
         <button class="btn" type="button" @click="exportRows">导出林木生长清单</button>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".csv,text/csv,text/plain"
+          class="visually-hidden"
+          @change="handleImport"
+        />
       </div>
     </header>
+
+    <p v-if="importMessage" class="import-result">{{ importMessage }}</p>
 
     <div class="stat-row">
       <article v-for="item in stats" :key="item.label" class="stat-card">
@@ -75,6 +86,8 @@ import { computed, onMounted, ref } from 'vue'
 
 import {
   downloadEntries,
+  downloadTreegrowthBaseline,
+  importTreegrowthEntries,
   listEntries,
   moduleMeta,
   runAction as applyAction,
@@ -82,7 +95,7 @@ import {
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('treegrowth')
-const columns = ["记录编号", "样地编号", "林分类型", "平均胸径", "平均树高", "郁闭度", "调查员", "记录状态"]
+const columns = ["记录编号", "样地编号", "林分类型", "平均胸径", "平均树高", "郁闭度", "调查员", "记录状态", "基线版本", "历史林分类型"]
 const actions = ["提交审核", "确认记录", "要求复核"]
 const statuses = ["已录入", "已审核", "需复核", "已归档"]
 const stats = [{"label": "样地数量", "value": 0}, {"label": "待审核记录", "value": 0}, {"label": "本月录入", "value": 0}]
@@ -90,6 +103,8 @@ const stats = [{"label": "样地数量", "value": 0}, {"label": "待审核记录
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
+const importMessage = ref('')
+const fileInput = ref<HTMLInputElement | null>(null)
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
 const statusSummary = computed(() =>
@@ -106,6 +121,39 @@ function resetFilters() {
 
 function exportRows() {
   downloadEntries(meta.key)
+}
+
+function triggerImport() {
+  fileInput.value?.click()
+}
+
+async function handleImport(event: Event) {
+  errorMessage.value = ''
+  importMessage.value = ''
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) {
+    return
+  }
+  try {
+    const content = await file.text()
+    const result = importTreegrowthEntries(content)
+    if (!result.ok) {
+      errorMessage.value = result.message
+      return
+    }
+    importMessage.value = result.message
+    reload()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '调查文件读取失败'
+  }
+}
+
+function downloadBaseline() {
+  errorMessage.value = ''
+  importMessage.value = ''
+  downloadTreegrowthBaseline()
 }
 
 function openCreate() {

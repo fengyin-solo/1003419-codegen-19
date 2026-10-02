@@ -34,5 +34,16 @@ export type ActionResult = {
 
 export type OverviewResult = {
   cards: { label: string; value: number }[]
-  modules: { name: string; created: number; pending: number; abnormal: number }[]
+  modules: { name: string; created: number; pending: number; abnormal: number; reviewed: number }[]
+}
+
+export type TreegrowthImportResult = {
+  ok: boolean
+  message: string
+  created: number
+  updated: number
+  conflicts: number
+  duplicated: number
+  backfilled: number
+  linked: number
 }
