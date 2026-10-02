@@ -92,12 +92,14 @@ export function loadOverview(): OverviewResult {
       name: meta.name,
       created: entries.length,
       pending: entries.filter((row) => row.pending).length,
+      approved: entries.filter((row) => String(row.status) === '已审核').length,
       abnormal: entries.filter((row) => row.abnormal).length,
     }
   })
   const cards = [
     { label: '业务模块', value: modules.length },
     { label: '登记总量', value: modules.reduce((sum, item) => sum + item.created, 0) },
+    { label: '已审核', value: modules.reduce((sum, item) => sum + item.approved, 0) },
     { label: '待处理', value: modules.reduce((sum, item) => sum + item.pending, 0) },
     { label: '异常量', value: modules.reduce((sum, item) => sum + item.abnormal, 0) },
   ]
